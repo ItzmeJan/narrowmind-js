@@ -295,6 +295,68 @@ class NarrowMind {
         const denom = Math.sqrt(normA) * Math.sqrt(normB);
         return denom === 0 ? 0 : dot / denom;
     }
+    compute_tfidf_relevance(candidate_word: string, context_words: string[]): number {
+        if (context_words.length === 0 || this.tfidf_vectors.length === 0) {
+            return 1.0; // No boost if no context or TF-IDF data
+        }
+
+        const context_vector = new Map<string, number>();
+        const context_tf = new Map<string, number>();
+        const context_word_count = context_words.length;
+
+        // Build context TF
+        for (const word of context_words) {
+            const normalized_word = this.extract_word(word).toLowerCase();
+            if (!this.is_question_word(normalized_word)) {
+            context_tf.set(normalized_word, (context_tf.get(normalized_word) || 0) + 1);
+            }
+        }
+
+        // Compute context TF-IDF vector
+        for (const [word, count] of context_tf.entries()) {
+            const tf = count / context_word_count;
+            const idf = this.idf_scores.get(word) ?? 0;
+            context_vector.set(word, tf * idf);
+        }
+
+        return this.compute_tfidf_relevance_with_vector(candidate_word, context_vector);
+    }
+
+    compute_tfidf_relevance_with_vector(candidate_word: string, context_vector: Map<string, number>): number {
+        if (this.tfidf_vectors.length === 0) {
+            return 1.0;
+        }
+
+        const candidate_word_lower = this.extract_word(candidate_word).toLowerCase();
+        const candidate_idf = this.idf_scores.get(candidate_word_lower) ?? 0;
+
+        let total_similarity = 0;
+        let sentence_count = 0;
+
+        // Sentences containing candidate word
+        const sentence_indices = this.word_to_contexts.get(candidate_word_lower);
+        if (sentence_indices) {
+            for (const sentence_idx of sentence_indices.slice(0, 10)) {
+            const sentence_vector = this.tfidf_vectors[sentence_idx];
+            if (sentence_vector) {
+                const similarity = this.cosine_similarity(context_vector, sentence_vector);
+                if (similarity > 0) {
+                total_similarity += similarity;
+                sentence_count++;
+                }
+            }
+            }
+        }
+
+        const avg_similarity = sentence_count > 0 ? total_similarity / sentence_count : 0;
+        const normalized_idf = Math.min(Math.max(candidate_idf / 6.0, 0.0), 1.0);
+
+        const similarity_boost = 1.0 + avg_similarity;      // 1.0–2.0
+        const idf_boost = 1.0 + normalized_idf * 0.5;       // 1.0–1.5
+
+        return similarity_boost * idf_boost;                // up to ~3.5x
+    }
+
 
 }
 
