@@ -484,7 +484,35 @@ class NarrowMind {
 
         return Array.from(continuations.entries());
     }
-    
+    getMultiNgramCandidates(
+        context: string[],
+        queryWords: string[],
+        stopAtSentenceEnd: boolean
+        ): [string, number][] {
+            const combinedCandidates: Record<string, number> = {};
+
+            // Iterate over n-gram sizes
+            for (const ngramSize of this.ngram_sizes) {
+                const weight = this.ngram_weights.get(ngramSize) ?? 0.0;
+                if (weight === 0.0) continue;
+
+                // Get candidates for this n-gram size
+                const candidates = this.getNgramCandidatesForSize(
+                    ngramSize,
+                    context,
+                    queryWords,
+                    stopAtSentenceEnd
+                );
+
+                // Combine with weighted scores
+                for (const [token, count] of candidates) {
+                    combinedCandidates[token] = (combinedCandidates[token] ?? 0) + count * weight;
+                }
+            }
+
+            return Object.entries(combinedCandidates);
+    }
+
 
 }
 
