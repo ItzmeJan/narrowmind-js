@@ -1,5 +1,2 @@
-class NarrowMind {
-    constructor() {
-        
-    }
-}
+const NarrowMind = require('./narrowmind');
+
