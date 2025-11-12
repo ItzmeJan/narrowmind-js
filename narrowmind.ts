@@ -191,6 +191,57 @@ class NarrowMind {
         this.computeTfidf();
     }
     
+    computeTfidf(): void {
+        this.total_sentences = this.contexts.length;
+        if (this.total_sentences === 0) return;
+
+        // Step 1: Document Frequency (DF)
+        const document_frequency = new Map<string, number>();
+
+        for (const context of this.contexts) {
+            const sentence_words = new Set<string>();
+            for (const token of context.tokens) {
+            const word = this.extractWord(token).toLowerCase();
+            if (!this.isQuestionWord(word)) {
+                sentence_words.add(word);
+            }
+            }
+            for (const word of sentence_words) {
+            document_frequency.set(word, (document_frequency.get(word) || 0) + 1);
+            }
+        }
+
+        // Step 2: Compute IDF = log(total_sentences / (1 + df))
+        for (const [word, df] of document_frequency.entries()) {
+            const idf = Math.log(this.total_sentences / (1 + df));
+            this.idf_scores.set(word, idf);
+        }
+
+        // Step 3: Compute TF-IDF per sentence
+        this.tfidf_vectors = [];
+        for (const context of this.contexts) {
+            const tfidf_vector = new Map<string, number>();
+            const term_frequency = new Map<string, number>();
+            let total_words = 0;
+
+            for (const token of context.tokens) {
+            const word = this.extractWord(token).toLowerCase();
+            if (!this.isQuestionWord(word)) {
+                term_frequency.set(word, (term_frequency.get(word) || 0) + 1);
+                total_words++;
+            }
+            }
+
+            // TF-IDF = (count / total_words) * IDF
+            for (const [word, count] of term_frequency.entries()) {
+            const tf = count / total_words;
+            const idf = this.idf_scores.get(word) ?? 0.0;
+            tfidf_vector.set(word, tf * idf);
+            }
+
+            this.tfidf_vectors.push(tfidf_vector);
+        }
+    }
 
 }
 
