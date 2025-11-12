@@ -513,7 +513,21 @@ class NarrowMind {
             return Object.entries(combinedCandidates);
     }
     
-    
+    private arraysEqual(a: string[], b: string[]): boolean {
+        return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    // Because JS Map can't use arrays as keys directly the same way as Rust HashMap<Vec<String>, _>
+    private findMapValue(
+        map: Map<string[], [string, number][]>,
+        key: string[]
+    ): [string, number][] | undefined {
+        for (const [k, v] of map.entries()) {
+            if (this.arraysEqual(k, key)) return v;
+        }
+        return undefined;
+    }
+
 
 }
 
