@@ -488,29 +488,43 @@ class NarrowMind {
         context: string[],
         queryWords: string[],
         stopAtSentenceEnd: boolean
-        ): [string, number][] {
-            const combinedCandidates: Record<string, number> = {};
+    ): [string, number][] {
+                const combinedCandidates: Record<string, number> = {};
 
-            // Iterate over n-gram sizes
-            for (const ngramSize of this.ngram_sizes) {
-                const weight = this.ngram_weights.get(ngramSize) ?? 0.0;
-                if (weight === 0.0) continue;
+                // Iterate over n-gram sizes
+                for (const ngramSize of this.ngram_sizes) {
+                    const weight = this.ngram_weights.get(ngramSize) ?? 0.0;
+                    if (weight === 0.0) continue;
 
-                // Get candidates for this n-gram size
-                const candidates = this.getNgramCandidatesForSize(
-                    ngramSize,
-                    context,
-                    queryWords,
-                    stopAtSentenceEnd
-                );
+                    // Get candidates for this n-gram size
+                    const candidates = this.getNgramCandidatesForSize(
+                        ngramSize,
+                        context,
+                        queryWords,
+                        stopAtSentenceEnd
+                    );
 
-                // Combine with weighted scores
-                for (const [token, count] of candidates) {
-                    combinedCandidates[token] = (combinedCandidates[token] ?? 0) + count * weight;
+                    // Combine with weighted scores
+                    for (const [token, count] of candidates) {
+                        combinedCandidates[token] = (combinedCandidates[token] ?? 0) + count * weight;
+                    }
                 }
-            }
 
             return Object.entries(combinedCandidates);
+        }
+        private arraysEqual(a: string[], b: string[]): boolean {
+        return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    
+    private findMapValue(
+        map: Map<string[], [string, number][]>,
+        key: string[]
+    ): [string, number][] | undefined {
+        for (const [k, v] of map.entries()) {
+            if (this.arraysEqual(k, key)) return v;
+        }
+        return undefined;
     }
 
 
