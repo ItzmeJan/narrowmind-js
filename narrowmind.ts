@@ -391,6 +391,9 @@ class NarrowMind {
         return tokens;
     }
     
+    isSentenceEnder(token: string): boolean {
+        return token.endsWith(".") || token.endsWith("!") || token.endsWith("?");
+    }
 
 }
 
