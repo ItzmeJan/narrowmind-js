@@ -403,6 +403,89 @@ class NarrowMind {
         // Remove trailing punctuation (non-alphanumeric except apostrophes)
         return token.replace(/[^a-zA-Z0-9']+$/g, '');
     }
+
+    getDirectSentenceContinuations(context: string[], queryWords: string[]): [string, number][] {
+        const continuations = new Map<string, number>();
+
+        // Find top matching sentences
+        const topSentences = this.findSimilarContexts(queryWords); // returns [index, score] pairs
+
+        // Normalize context
+        const contextWordsNormalized = context.map(t => this.extractWord(t).toLowerCase());
+        if (contextWordsNormalized.length === 0) return [];
+
+        for (const [sentenceIdx, matchScore] of topSentences.slice(0, 20)) {
+            const contextEntry = this.contexts[sentenceIdx];
+            if (!contextEntry) continue;
+
+            const sentenceWords = contextEntry.tokens.map(t => this.extractWord(t).toLowerCase());
+
+            for (let startIdx = 0; startIdx < sentenceWords.length; startIdx++) {
+            let matchesExact = true;
+            let matchedLength = 0;
+
+            for (let i = 0; i < contextWordsNormalized.length; i++) {
+                if (startIdx + i >= sentenceWords.length) {
+                matchesExact = false;
+                break;
+                }
+                if (sentenceWords[startIdx + i] === contextWordsNormalized[i]) {
+                matchedLength++;
+                } else {
+                matchesExact = false;
+                break;
+                }
+            }
+
+            if (matchesExact && matchedLength > 0) {
+                const nextPos = startIdx + matchedLength;
+
+                // Extract next 1–2 words
+                for (let offset = 0; offset < 2; offset++) {
+                if (nextPos + offset < contextEntry.tokens.length) {
+                    const nextToken = contextEntry.tokens[nextPos + offset];
+                    const word = this.extractWord(nextToken).toLowerCase();
+
+                    if (!this.isQuestionWord(word) && !contextWordsNormalized.includes(word)) {
+                    const matchRatio = matchedLength / contextWordsNormalized.length;
+                    const positionBonus = startIdx < 5 ? 1.5 : 1.0;
+                    const offsetPenalty = offset === 0 ? 1.0 : 0.7;
+
+                    const weight = Math.floor(matchScore * matchRatio * positionBonus * offsetPenalty * 5);
+                    continuations.set(nextToken, (continuations.get(nextToken) ?? 0) + weight);
+                    }
+                }
+                }
+            }
+
+            // Suffix matching
+            if (
+                contextWordsNormalized.length > 1 &&
+                startIdx + contextWordsNormalized.length <= sentenceWords.length
+            ) {
+                const contextSuffix = contextWordsNormalized.slice(-2);
+                const sentenceWindow = sentenceWords.slice(startIdx, startIdx + contextSuffix.length);
+
+                if (JSON.stringify(contextSuffix) === JSON.stringify(sentenceWindow)) {
+                const nextPos = startIdx + contextSuffix.length;
+                if (nextPos < contextEntry.tokens.length) {
+                    const nextToken = contextEntry.tokens[nextPos];
+                    const word = this.extractWord(nextToken).toLowerCase();
+
+                    if (!this.isQuestionWord(word) && !contextWordsNormalized.includes(word)) {
+                    const weight = Math.floor(matchScore * 0.7 * 3);
+                    continuations.set(nextToken, (continuations.get(nextToken) ?? 0) + weight);
+                    }
+                }
+                }
+            }
+            }
+        }
+
+        return Array.from(continuations.entries());
+    }
+    
+
 }
 
 export default NarrowMind;
