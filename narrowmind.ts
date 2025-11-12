@@ -395,6 +395,9 @@ class NarrowMind {
         return token.endsWith(".") || token.endsWith("!") || token.endsWith("?");
     }
 
+    isPause(token: string): boolean {
+        return token.endsWith(",") || token.endsWith(";") || token.endsWith(":");
+    }
 }
 
 export default NarrowMind;
