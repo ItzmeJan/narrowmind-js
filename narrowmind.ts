@@ -1,7 +1,12 @@
 class NarrowMind {
-    tokens:string;
-    
+    tokens:string[]
+
     constructor() {
+        this.tokens = [];
+
+    }
+
+    train(data:string) {
         
     }
 }
