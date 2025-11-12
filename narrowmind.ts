@@ -190,7 +190,7 @@ class NarrowMind {
         // Compute TF-IDF
         this.computeTfidf();
     }
-    
+
     computeTfidf(): void {
         this.total_sentences = this.contexts.length;
         if (this.total_sentences === 0) return;
@@ -241,6 +241,59 @@ class NarrowMind {
 
             this.tfidf_vectors.push(tfidf_vector);
         }
+    }
+    // returns array of [contextIndex, similarityScore]
+    find_similar_contexts_tfidf(query_words: string[]): [number, number][] {
+        if (this.tfidf_vectors.length === 0 || query_words.length === 0) return [];
+
+        // Build query TF map
+        const query_tf = new Map<string, number>();
+        const query_word_count = query_words.length;
+        for (const w of query_words) {
+            const normalized = this.extract_word(w).toLowerCase();
+            if (!this.is_question_word(normalized)) {
+            query_tf.set(normalized, (query_tf.get(normalized) || 0) + 1);
+            }
+        }
+
+        // Build query TF-IDF vector
+        const query_vector = new Map<string, number>();
+        for (const [word, count] of query_tf.entries()) {
+            const tf = count / query_word_count;
+            const idf = this.idf_scores.get(word) ?? 0;
+            query_vector.set(word, tf * idf);
+        }
+
+        // Compare with sentence vectors
+        const similarities: [number, number][] = [];
+        this.tfidf_vectors.forEach((sentence_vector, idx) => {
+            const sim = this.cosine_similarity(query_vector, sentence_vector);
+            if (sim > 0) similarities.push([idx, sim]);
+        });
+
+        // Sort desc and take top 30
+        similarities.sort((a, b) => b[1] - a[1]);
+        return similarities.slice(0, 30);
+    }
+
+    // cosine similarity helper (using your snake_case name)
+    cosine_similarity(vecA: Map<string, number>, vecB: Map<string, number>): number {
+        let dot = 0;
+        let normA = 0;
+        let normB = 0;
+
+        for (const [k, aVal] of vecA.entries()) {
+            const bVal = vecB.get(k) ?? 0;
+            dot += aVal * bVal;
+            normA += aVal * aVal;
+        }
+
+        for (const bVal of vecB.values()) {
+            normB += bVal * bVal;
+        }
+
+        const denom = Math.sqrt(normA) * Math.sqrt(normB);
+        return denom === 0 ? 0 : dot / denom;
     }
 
 }
