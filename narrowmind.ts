@@ -398,6 +398,11 @@ class NarrowMind {
     isPause(token: string): boolean {
         return token.endsWith(",") || token.endsWith(";") || token.endsWith(":");
     }
+
+    extractWord(token: string): string {
+        // Remove trailing punctuation (non-alphanumeric except apostrophes)
+        return token.replace(/[^a-zA-Z0-9']+$/g, '');
+    }
 }
 
 export default NarrowMind;
