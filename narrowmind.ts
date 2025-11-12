@@ -1,42 +1,75 @@
 type NGram = string[];
-type NGramCount = Map<NGram, number>;
-type NGramContext = Map<string[], [string, number][]>;
+type NGramCount = Map<string, number>;
+type NGramContext = Map<string, [string, number][]>;
 
 type ContextEntry = {
-    tokens: string[],
-    _text: string,
-}
+  tokens: string[];
+  _text: string;
+};
 
 class NarrowMind {
-    n!: number // Primary n-gram size (for backward compatibility)
-    ngram_sizes!: number[] // All n-gram sizes to train (e.g., [2, 3, 4])
-    ngram_weights!: Map<number, number> // Weights for each n-gram size (must sum to ~1.0)
-    ngram_counts!: NGramCount // Combined counts (for backward compatibility)
-    ngram_contexts!: NGramContext // Primary n-gram contexts (for backward compatibility)
-    multi_ngram_contexts!: Map<number, NGramContext> // Separate contexts for each n-gram size
-    vocabulary!: string[]
-    unigram_count!: Map<string, number> // For smoothing and backoff
-    total_unigrams!: number // Total word count for probability calculations
-    temperature!: number // Controls randomness: 1.0 = normal, <1.0 = more deterministic, >1.0 = more random
-    top_k!: number // Only consider top-k most likely tokens (0 = no limit)
-    // Full text context scanning
-    contexts!: ContextEntry[] // All sentence-level contexts from training data
-    word_to_contexts!: Map<string, number[]> // Maps words to context indices where they appear
-    context_windows!: Map<string, [string[], string[]][]> // Word -> (before_context, after_context) pairs
-    raw_training_text!: string // Raw training text for direct pattern matching
-    // TF-IDF for vector-based sentence selection
-    tfidf_vectors!: Map<string, number>[] // TF-IDF vectors for each sentence
-    idf_scores!: Map<String, number> // Inverse document frequency for each word
-    total_sentences!: number // Total number of sentences for IDF calculation
+  n: number; // Primary n-gram size
+  ngram_sizes: number[]; // All n-gram sizes (e.g., [2, 3, 4])
+  ngram_weights: Map<number, number>; // Weight for each n-gram
+  ngram_counts: NGramCount; // Combined counts
+  ngram_contexts: NGramContext; // Primary n-gram contexts
+  multi_ngram_contexts: Map<number, NGramContext>; // Per-size contexts
+  vocabulary: string[];
+  unigram_count: Map<string, number>;
+  total_unigrams: number;
+  temperature: number;
+  top_k: number;
+  contexts: ContextEntry[];
+  word_to_contexts: Map<string, number[]>;
+  context_windows: Map<string, [string[], string[]][]>;
+  raw_training_text: string;
+  tfidf_vectors: Map<string, number>[];
+  idf_scores: Map<string, number>;
+  total_sentences: number;
 
-    constructor() {
-        
+  constructor() {
+    this.n = 3;
+    this.ngram_sizes = [2, 3];
+    this.ngram_weights = new Map([
+      [3, 0.5],
+      [2, 0.3],
+    ]);
 
+    // Normalize weights
+    const totalWeight = Array.from(this.ngram_weights.values()).reduce((a, b) => a + b, 0);
+    for (const [key, val] of this.ngram_weights) {
+      this.ngram_weights.set(key, val / totalWeight);
     }
 
-    train(data:string) {
-        
+    this.ngram_counts = new Map();
+    this.ngram_contexts = new Map();
+
+    this.multi_ngram_contexts = new Map();
+    for (const size of this.ngram_sizes) {
+      this.multi_ngram_contexts.set(size, new Map());
     }
+
+    this.vocabulary = [];
+    this.unigram_count = new Map();
+    this.total_unigrams = 0;
+    this.temperature = 1.0;
+    this.top_k = 40;
+
+    this.contexts = [];
+    this.word_to_contexts = new Map();
+    this.context_windows = new Map();
+
+    this.raw_training_text = "";
+    this.tfidf_vectors = [];
+    this.idf_scores = new Map();
+    this.total_sentences = 0;
+  }
+
+  train(data: string): void {
+    this.raw_training_text = data;
+    console.log("Training on data length:", data.length);
+    // Training logic will go here
+  }
 }
 
-module.exports =  NarrowMind;
+export default NarrowMind;
