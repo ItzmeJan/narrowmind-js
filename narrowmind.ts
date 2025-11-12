@@ -356,7 +356,41 @@ class NarrowMind {
 
         return similarity_boost * idf_boost;                // up to ~3.5x
     }
+    tokenize(text: string): string[] {
+        const tokens: string[] = [];
+        const textLower = text.toLowerCase();
+        let currentWord = "";
 
+        for (const ch of textLower) {
+            if (/\s/.test(ch)) {
+            if (currentWord.length > 0) {
+                tokens.push(currentWord);
+                currentWord = "";
+            }
+            } else if (/[a-z0-9]/.test(ch) || ch === "'") {
+            // Include apostrophes for contractions
+            currentWord += ch;
+            } else {
+            // Punctuation
+            if (currentWord.length > 0) {
+                currentWord += ch;
+                tokens.push(currentWord);
+                currentWord = "";
+            } else {
+                // Punctuation at start
+                tokens.push(ch);
+            }
+            }
+        }
+
+        // Add leftover word
+        if (currentWord.length > 0) {
+            tokens.push(currentWord);
+        }
+
+        return tokens;
+    }
+    
 
 }
 
