@@ -1,6 +1,10 @@
-type ContextEntry {
+type NGram = string[];
+type NGramCount = Map<NGram, number>;
+type NGramContext = Map<string[], [string, number][]>;
+
+type ContextEntry = {
     tokens: string[],
-    _text: string, // Original text for reference (kept for potential future use)
+    _text: string,
 }
 
 class NarrowMind {
