@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/ItzmeJan/narrowmind-js/issues"
   },
-  "homepage": "https://github.com/ItzmeJan/narrowmind-js#readme"
+  "homepage": "https://github.com/ItzmeJan/narrowmind-js#readme",
+  "devDependencies": {
+    "@types/node": "^24.10.1"
+  }
 }
